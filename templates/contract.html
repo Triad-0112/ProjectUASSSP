@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Contract</title>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-gray-800 p-4">
+        <div class="container mx-auto flex items-center">
+            <!-- Logo -->
+            <a href="#" class="flex items-center mr-4">
+                <img src="/public/assets/logo.png" alt="Logo" class="h-10 w-auto">
+            </a>
+            <!-- Navigation Links -->
+            <div class="flex-grow flex justify-between items-center">
+                <div class="flex space-x-4">
+                    <a href="/dashboard" class="text-white text-sm font-semibold">Home</a>
+                    <a href="/contract" class="text-white text-sm font-semibold">Contract</a>
+                    <a href="/invoice" class="text-white text-sm font-semibold">Invoice</a>
+                    <a href="/customer" class="text-white text-sm font-semibold">Customer</a>
+                </div>
+                <button onclick="logout()" class="text-white text-sm font-semibold">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto p-6 flex-grow">
+        <h1 class="text-3xl font-bold mb-4">Contract Page</h1>
+        
+        <!-- Create Contract Form -->
+        <div class="bg-white shadow-md rounded-lg p-4 mb-6">
+            <h2 class="text-2xl font-semibold mb-4">Create New Contract</h2>
+            <form id="create-contract-form">
+                <div class="mb-4">
+                    <label for="customer-id" class="block text-sm font-medium text-gray-700">Customer Name</label>
+                    <select id="customer-id" name="customer_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label for="customer-name" class="block text-sm font-medium text-gray-700">Customer Name</label>
+                    <input type="text" id="customer-name" name="customer_name" readonly class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div class="mb-4">
+                    <label for="start-date" class="block text-sm font-medium text-gray-700">Start Date</label>
+                    <input type="date" id="start-date" name="start_date" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+                <div class="mb-4">
+                    <label for="end-date" class="block text-sm font-medium text-gray-700">End Date</label>
+                    <input type="date" id="end-date" name="end_date" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm">
+                </div>
+                
+                <h3 class="text-xl font-semibold mb-2">Goods</h3>
+                <div id="goods-container" class="mb-4">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="goods-list" class="bg-white divide-y divide-gray-200">
+                            <!-- Goods rows will be added dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+                <button type="button" onclick="addGoodsRow()" class="bg-blue-500 text-white px-4 py-2 rounded-md">Add Goods Row</button>
+                <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-md mt-4">Create Contract</button>
+            </form>
+        </div>
+
+        <div id="contracts-container" class="bg-white shadow-md rounded-lg p-4">
+            <h2 class="text-2xl font-semibold mb-4">All Contracts</h2>
+            <div id="contracts-list"></div>
+        </div>
+    </div>
+
+    <script>
+        function formatCurrency(amount) {
+            const formatter = new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+            });
+            return formatter.format(amount);
+        }
+
+        async function fetchContracts() {
+            try {
+                const response = await fetch('/contracts', {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const contracts = await response.json();
+                console.log('Contracts:', contracts);
+
+                const contractsList = document.getElementById('contracts-list');
+                if (!contractsList) {
+                    console.error('contracts-list element not found');
+                    return;
+                }
+
+                contractsList.innerHTML = '';
+
+                if (!Array.isArray(contracts) || contracts.length === 0) {
+                    contractsList.innerHTML = '<p>No contracts found.</p>';
+                    return;
+                }
+
+                contracts.forEach(contract => {
+                    const contractItem = document.createElement('div');
+                    contractItem.className = 'p-4 border-b border-gray-200';
+                    contractItem.innerHTML = `
+                        <p><strong>ID:</strong> ${contract.ID}</p>
+                        <p><strong>Customer Name:</strong> ${contract.customer_name}</p>
+                        <p><strong>Status:</strong> ${contract.Status}</p>
+                        <p><strong>Start Date:</strong> ${new Date(contract.StartDate).toLocaleDateString()}</p>
+                        <p><strong>End Date:</strong> ${new Date(contract.EndDate).toLocaleDateString()}</p>
+                        <p><strong>Created At:</strong> ${new Date(contract.CreatedAt).toLocaleDateString()}</p>
+                        <div><strong>Goods:</strong>
+                            ${Array.isArray(contract.Goods) && contract.Goods.length > 0 ?
+                                `
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${generateGoodsTable(contract.Goods)}
+                                    </tbody>
+                                </table>
+                                ` :
+                                '<p>No goods available.</p>'
+                            }
+                        </div>
+                    `;
+                    contractsList.appendChild(contractItem);
+                });
+            } catch (error) {
+                console.error('Error fetching contracts:', error);
+            }
+        }
+
+        function generateGoodsTable(goods) {
+            const groupedGoods = groupByUnit(goods);
+            let tableRows = '';
+            let grandTotalQuantity = 0;
+            let grandTotalPrice = 0.0;
+
+            for (const [unit, items] of Object.entries(groupedGoods)) {
+                let unitTotalQuantity = 0;
+                let unitTotalPrice = 0.0;
+
+                items.forEach(good => {
+                    unitTotalQuantity += good.Quantity;
+                    unitTotalPrice += good.Price;
+                    tableRows += `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap">${good.Item}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${good.Quantity}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${good.Unit}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${formatCurrency(good.Price.toFixed(2))}</td>
+                        </tr>
+                    `;
+                });
+
+                tableRows += `
+                    <tr>
+                        <td colspan="3" class="px-6 py-4 whitespace-nowrap font-semibold">Total (${unit})</td>
+                        <td class="px-6 py-4 whitespace-nowrap font-semibold">${formatCurrency(unitTotalPrice.toFixed(2))}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="3" class="px-6 py-4 whitespace-nowrap font-semibold">Grand Total Quantity (${unit})</td>
+                        <td class="px-6 py-4 whitespace-nowrap font-semibold">${unitTotalQuantity}</td>
+                    </tr>
+                `;
+
+                grandTotalQuantity += unitTotalQuantity;
+                grandTotalPrice += unitTotalPrice;
+            }
+
+            tableRows += `
+                <tr>
+                    <td colspan="3" class="px-6 py-4 whitespace-nowrap font-semibold">Grand Total</td>
+                    <td class="px-6 py-4 whitespace-nowrap font-semibold">${formatCurrency(grandTotalPrice.toFixed(2))}</td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="px-6 py-4 whitespace-nowrap font-semibold">Grand Total Quantity</td>
+                    <td class="px-6 py-4 whitespace-nowrap font-semibold">${grandTotalQuantity}</td>
+                </tr>
+            `;
+
+            return tableRows;
+        }
+
+        function groupByUnit(goods) {
+            return goods.reduce((acc, good) => {
+                if (!acc[good.Unit]) {
+                    acc[good.Unit] = [];
+                }
+                acc[good.Unit].push(good);
+                return acc;
+            }, {});
+        }
+
+        async function fetchCustomers() {
+            try {
+                const response = await fetch('/customers', {
+                    method: 'GET',
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const customers = await response.json();
+                const customerSelect = document.getElementById('customer-id');
+
+                if (!Array.isArray(customers) || customers.length === 0) {
+                    customerSelect.innerHTML = '<option value="">No customers available</option>';
+                    return;
+                }
+
+                customers.forEach(customer => {
+                    const option = document.createElement('option');
+                    option.value = customer.ID;
+                    option.textContent = customer.Name;
+                    customerSelect.appendChild(option);
+                });
+                updateCustomerName();
+            } catch (error) {
+                console.error('Error fetching customers:', error);
+            }
+        }
+
+        function updateCustomerName() {
+            const customerSelect = document.getElementById('customer-id');
+            const customerNameInput = document.getElementById('customer-name');
+
+            const selectedCustomerId = customerSelect.value;
+            const customerOption = customerSelect.querySelector(`option[value="${selectedCustomerId}"]`);
+
+            if (customerOption) {
+                customerNameInput.value = customerOption.textContent;
+            } else {
+                customerNameInput.value = '';
+            }
+        }
+
+        function addGoodsRow() {
+            const goodsList = document.getElementById('goods-list');
+            const rowCount = goodsList.querySelectorAll('tr').length;
+            const row = document.createElement('tr');
+
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap"><input type="text" name="goods[${rowCount}][item]" required class="w-full border-gray-300 rounded-md shadow-sm"></td>
+                <td class="px-6 py-4 whitespace-nowrap"><input type="number" name="goods[${rowCount}][quantity]" required class="w-full border-gray-300 rounded-md shadow-sm" min="1"></td>
+                <td class="px-6 py-4 whitespace-nowrap"><input type="text" name="goods[${rowCount}][unit]" required class="w-full border-gray-300 rounded-md shadow-sm"></td>
+                <td class="px-6 py-4 whitespace-nowrap"><input type="number" name="goods[${rowCount}][price]" required class="w-full border-gray-300 rounded-md shadow-sm" step="0.01" min="0"></td>
+                <td class="px-6 py-4 whitespace-nowrap"><button type="button" onclick="removeGoodsRow(this)" class="bg-red-500 text-white px-2 py-1 rounded-md">Remove</button></td>
+            `;
+            goodsList.appendChild(row);
+        }
+
+        function removeGoodsRow(button) {
+            const row = button.closest('tr');
+            row.remove();
+        }
+
+        async function createContract(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(document.getElementById('create-contract-form'));
+            const data = {
+                customer_id: formData.get('customer_id'),
+                customer_name: formData.get('customer_name'),
+                start_date: new Date(formData.get('start_date')).toISOString,
+                end_date: new Date(formData.get('end_date')).toISOString,
+                goods: [],
+                CreatedAt: new Date().toISOString(),
+                status: 'active'
+            };
+
+            formData.forEach((value, key) => {
+                if (key.startsWith('goods[')) {
+                    const match = key.match(/^goods\[(\d+)\]\[(\w+)\]$/);
+                    if (match) {
+                        const [, index, field] = match;
+                        if (!data.goods[index]) {
+                            data.goods[index] = {};
+                        }
+                        // Convert types as needed
+                        if (field === 'quantity' || field === 'price') {
+                            data.goods[index][field] = parseInt(value, 10);
+                        } else {
+                            data.goods[index][field] = value;
+                        }
+                    }
+                }
+            });
+
+
+            try {
+                const response = await fetch('/contracts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data),
+                    credentials: 'same-origin'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                alert('Contract created successfully!');
+                fetchContracts(); // Refresh the list
+                document.getElementById('create-contract-form').reset(); // Reset the form
+            } catch (error) {
+                console.error('Error creating contract:', error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchContracts();
+            fetchCustomers(); // Fetch customers when page loads
+
+            const createContractForm = document.getElementById('create-contract-form');
+            createContractForm.addEventListener('submit', createContract);
+
+            const customerSelect = document.getElementById('customer-id');
+            customerSelect.addEventListener('change', updateCustomerName);
+        });
+
+        function logout() {
+            fetch('/logout', {
+                method: 'GET',
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                if (response.redirected) {
+                    window.location.href = response.url;
+                }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+            });
+        }
+    </script>
+</body>
+<footer class="bg-gray-800 p-4 mt-8">
+    <div class="container mx-auto text-center text-white text-sm">
+        <p>Copyright &copy; 2024 by Panji Tri Wahyudi (22201050). HTML to backend by Aulia Rizky Fadhilah (22201069). Institut Teknologi dan Bisnis Asia Malang</p>
+    </div>
+</footer>
+</html>

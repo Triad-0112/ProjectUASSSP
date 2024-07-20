@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Distribution Flex</title>
+</head>
+<body class="bg-gray-100">
+    <!-- Navbar -->
+    <nav class="bg-gray-800 p-4">
+        <div class="container mx-auto flex items-center">
+            <!-- Logo -->
+            <a href="#" class="flex items-center mr-4">
+                <img src="/public/assets/logo.png" alt="Logo" class="h-10 w-auto">
+            </a>
+            <!-- Navigation Links -->
+            <div class="flex-grow flex justify-between items-center">
+                <div class="flex space-x-4">
+                    <a href="/dashboard" class="text-white text-sm font-semibold">Home</a>
+                    <a href="/contract" class="text-white text-sm font-semibold">Contract</a>
+                    <a href="/invoice" class="text-white text-sm font-semibold">Invoice</a>
+                    <a href="/customer" class="text-white text-sm font-semibold">Customer</a>
+                </div>
+                <button onclick="logout()" class="text-white text-sm font-semibold">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mx-auto p-6">
+        <h1 class="text-3xl font-bold mb-4">Welcome to the Distribution Goods Contract</h1>
+        <!-- Add your dashboard content here -->
+    </div>
+
+    <footer class="bg-gray-800 p-4 mt-8">
+        <div class="container mx-auto text-center text-white text-sm">
+            <p>Copyright &copy; 2024 by Panji Tri Wahyudi (22201050). HTML to backend by Aulia Rizky Fadhilah (22201069). Institut Teknologi dan Bisnis Asia Malang</p>
+        </div>
+    </footer>
+
+    <script>
+        function logout() {
+            // Send GET request to the logout endpoint
+            fetch('/logout', {
+                method: 'GET',
+                credentials: 'same-origin' // Include cookies in the request
+            })
+            .then(response => {
+                if (response.redirected) {
+                    // If the server redirects, follow the redirect
+                    window.location.href = response.url;
+                }
+            })
+            .catch(error => {
+                console.error('Error during logout:', error);
+                // Handle error, show error message, or log out user
+            });
+        }
+    </script>
+</body>
+</html>
